@@ -229,3 +229,65 @@ def test_cli_hyperkalemia():
 
 def test_cli_hypocalcemia():
     assert main(["hypocalcemia", "--ca", "7.0", "--weight", "70"]) == 0
+
+
+def test_cli_hypercalcemia():
+    assert main(["hypercalcemia", "--ca", "14.5", "--weight", "70"]) == 0
+
+
+def test_cli_hypomagnesemia():
+    assert main(["hypomagnesemia", "--mg", "1.0", "--weight", "70"]) == 0
+
+
+def test_cli_phosphorus():
+    assert main(["phosphorus", "--phos", "1.5", "--weight", "70"]) == 0
+
+
+# --- Input Validation ---
+
+def test_sodium_deficit_invalid_weight():
+    import pytest
+    with pytest.raises(ValueError):
+        calc_sodium_deficit(120, 130, -5, "male")
+
+
+def test_sodium_deficit_invalid_na():
+    import pytest
+    with pytest.raises(ValueError):
+        calc_sodium_deficit(-10, 130, 70, "male")
+
+
+def test_hyponatremia_invalid_hours():
+    import pytest
+    with pytest.raises(ValueError):
+        calc_hyponatremia_correction(120, 130, 70, "male", -5)
+
+
+def test_ecg_risk_invalid_k():
+    import pytest
+    with pytest.raises(ValueError):
+        assess_hyperkalemia_ecg_risk(-1)
+
+
+def test_calcium_gluconate_invalid_weight():
+    import pytest
+    with pytest.raises(ValueError):
+        calc_calcium_gluconate_dose(6.5, -70)
+
+
+def test_insulin_glucose_invalid_glucose():
+    import pytest
+    with pytest.raises(ValueError):
+        calc_insulin_glucose_dose(6.5, 70, -50)
+
+
+def test_magnesium_invalid_renal():
+    import pytest
+    with pytest.raises(ValueError):
+        calc_magnesium_dose(1.0, 70, "invalid")
+
+
+def test_phosphorus_invalid_weight():
+    import pytest
+    with pytest.raises(ValueError):
+        calc_phosphorus_dose(1.5, -70)

@@ -142,11 +142,11 @@ python cli.py --input data.csv
 
 ## 🛡️ Security & Enterprise Architecture
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
+* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, DOB, and patient identifiers.
+* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition. Configure `AUDIT_SECRET_KEY` env var for persistent audit integrity.
 * **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+* **Input Validation:** All calculation functions validate physiological ranges to prevent erroneous outputs.
+* **FastAPI & Prometheus Telemetry:** Exposes REST endpoints and operational Prometheus metrics (`/metrics`).
 
 ---
 
@@ -161,8 +161,13 @@ pytest -v
 Execute high-throughput batch simulation benchmarks:
 
 ```bash
-python simulator.py --tasks 1000 --concurrency 8
+python simulator.py 1000
 ```
+
+### Test Coverage
+
+- **50 tests** covering all calculation functions, CLI commands, PHI guard enforcement, audit trail integrity, and input validation
+- Tests verify physiological range validation, edge cases, and error handling
 
 ---
 

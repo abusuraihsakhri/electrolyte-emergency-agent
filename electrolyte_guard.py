@@ -16,7 +16,6 @@ Stdlib only.
 
 import argparse
 import json
-import math
 import sys
 from typing import Dict, Any
 
@@ -42,8 +41,12 @@ def calc_sodium_deficit(current_na: float, desired_na: float,
     Returns:
         Dict with sodium deficit and TBW
     """
-    if weight_kg <= 0:
-        raise ValueError("Weight must be positive")
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if current_na <= 0 or current_na > 200:
+        raise ValueError("Current Na must be in physiological range (0-200 mEq/L)")
+    if desired_na <= 0 or desired_na > 200:
+        raise ValueError("Desired Na must be in physiological range (0-200 mEq/L)")
     if desired_na <= current_na:
         raise ValueError("Desired Na must be greater than current Na")
 
@@ -82,6 +85,14 @@ def calc_hyponatremia_correction(current_na: float, desired_na: float,
     Returns:
         Dict with correction plan
     """
+    if hours <= 0:
+        raise ValueError("Hours must be positive")
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if current_na <= 0 or current_na > 200:
+        raise ValueError("Current Na must be in physiological range (0-200 mEq/L)")
+    if desired_na <= 0 or desired_na > 200:
+        raise ValueError("Desired Na must be in physiological range (0-200 mEq/L)")
     if current_na >= 135:
         return {
             "current_na": current_na,
@@ -153,6 +164,8 @@ def assess_hyperkalemia_ecg_risk(k_level: float) -> Dict[str, Any]:
     Returns:
         Dict with risk level and expected ECG changes
     """
+    if k_level < 0 or k_level > 15:
+        raise ValueError("K level must be in physiological range (0-15 mEq/L)")
     if k_level < 5.5:
         return {
             "k_level": k_level,
@@ -212,6 +225,10 @@ def calc_calcium_gluconate_dose(k_level: float, weight_kg: float = 70.0) -> Dict
     Returns:
         Dict with dosing
     """
+    if k_level < 0 or k_level > 15:
+        raise ValueError("K level must be in physiological range (0-15 mEq/L)")
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
     if k_level < 6.0:
         dose_ml = 0
         urgency = "not_routine"
@@ -263,6 +280,12 @@ def calc_insulin_glucose_dose(k_level: float, weight_kg: float = 70.0,
     Returns:
         Dict with insulin/glucose dosing
     """
+    if k_level < 0 or k_level > 15:
+        raise ValueError("K level must be in physiological range (0-15 mEq/L)")
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if glucose_mg_dl < 0 or glucose_mg_dl > 1000:
+        raise ValueError("Glucose must be in physiological range (0-1000 mg/dL)")
     insulin_dose = 10.0  # units regular insulin IV
 
     if glucose_mg_dl < 250:
@@ -313,6 +336,12 @@ def calc_bicarbonate_dose(k_level: float, weight_kg: float = 70.0,
     Returns:
         Dict with bicarbonate dosing
     """
+    if k_level < 0 or k_level > 15:
+        raise ValueError("K level must be in physiological range (0-15 mEq/L)")
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if hco3 < 0 or hco3 > 50:
+        raise ValueError("HCO3 must be in physiological range (0-50 mEq/L)")
     if hco3 >= 22:
         dose_meq = 0
         note = "Bicarbonate not indicated (HCO3 ≥ 22). Use insulin+glucose instead."
@@ -429,8 +458,10 @@ def calc_hypocalcemia_dose(current_ca: float, weight_kg: float) -> Dict[str, Any
     Returns:
         Dict with calcium replacement dosing
     """
-    if weight_kg <= 0:
-        raise ValueError("Weight must be positive")
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if current_ca < 0 or current_ca > 20:
+        raise ValueError("Current Ca must be in physiological range (0-20 mg/dL)")
     if current_ca >= 8.5:
         return {
             "current_ca": current_ca,
@@ -480,6 +511,10 @@ def calc_hypercalcemia_treatment(ca_level: float, weight_kg: float) -> Dict[str,
     Returns:
         Dict with treatment plan
     """
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if ca_level < 0 or ca_level > 30:
+        raise ValueError("Ca level must be in physiological range (0-30 mg/dL)")
     if ca_level < 10.5:
         return {
             "ca_level": ca_level,
@@ -550,6 +585,12 @@ def calc_magnesium_dose(current_mg: float, weight_kg: float,
     Returns:
         Dict with magnesium replacement
     """
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if current_mg < 0 or current_mg > 10:
+        raise ValueError("Current Mg must be in physiological range (0-10 mg/dL)")
+    if renal_function not in ("normal", "impaired"):
+        raise ValueError("Renal function must be 'normal' or 'impaired'")
     if current_mg >= 1.7:
         return {
             "current_mg": current_mg,
@@ -597,7 +638,7 @@ def calc_magnesium_dose(current_mg: float, weight_kg: float,
 # ---------------------------------------------------------------------------
 
 def calc_phosphorus_dose(current_phos: float, weight_kg: float,
-                          renal_function: str = "normal") -> Dict[str, Any]:
+                           renal_function: str = "normal") -> Dict[str, Any]:
     """
     Phosphorus replacement for hypophosphatemia.
 
@@ -615,6 +656,12 @@ def calc_phosphorus_dose(current_phos: float, weight_kg: float,
     Returns:
         Dict with phosphorus replacement
     """
+    if weight_kg <= 0 or weight_kg > 500:
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
+    if current_phos < 0 or current_phos > 15:
+        raise ValueError("Current phosphorus must be in physiological range (0-15 mg/dL)")
+    if renal_function not in ("normal", "impaired"):
+        raise ValueError("Renal function must be 'normal' or 'impaired'")
     if current_phos >= 2.5:
         return {
             "current_phos": current_phos,
