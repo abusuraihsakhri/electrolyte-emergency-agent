@@ -1,179 +1,73 @@
 # Electrolyte Emergency Agent
 
-> **Domain:** Nephrology & Renal Replacement Protocols  
-> **Reference Guidelines & Standards:** `KDIGO & KDOQI Clinical Guidelines`
+Python-based electrolyte calculation prototypes, a generic rule-based audit interface, and a lightweight browser research calculator.
 
-<div align="center">
+> **Clinical limitation:** Research and teaching only. **Not validated for diagnosis, dosing, prescribing, infusion pump control, or emergency patient management.** No algorithm here can replace an ECG, serial blood testing, clinical assessment, or local hospital protocols. Do not enter real patient identifiers.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+## What is implemented
 
-</div>
+- `electrolyte_guard.py`: sodium deficit arithmetic, experimental hyponatremia correction estimates, potassium categories, and example calcium, magnesium, phosphorus, fluid and medication calculations. **Dose outputs have not undergone independent clinical validation; do not use them for treatment.**
+- `electrolyte_emergency_agent/`: a separate generic CSV/CLI/API audit engine using primary/secondary metrics and user-specified flags. Its thresholds are **not electrolyte diagnostic cutoffs**.
+- `agents/`: another generic worker/supervisor prototype with an in-memory HMAC-linked audit record, a regex-based identifier check, and a mock response adapter. It is not a deployable clinical decision-support system.
+- `enrichment.py`: illustrative scoring components, **not** live smart-pump, ICU registry, predictive model, or dialysis integrations.
+- `web/index.html`: static educational UI that downloads Pyodide and runs the repository's Python calculator **locally in the browser**. The UI currently exposes *sodium deficit arithmetic* and *non-diagnostic potassium categories*; no dose-regimen interface is provided.
 
----
+## Browser application
 
-## 📖 What It Does
-
-**Electrolyte Emergency Agent** is an advanced analytical and computational platform implementing Severe Hyponatremia (<=6-8 mEq/24h) & Hyperkalemia Safe Titrator.
-
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-### 🔬 Analytical Functions
-
-- **`calc_sodium_deficit()`**: Sodium deficit for hyponatremia correction.
-
-Na deficit (mEq) = (Desired Na - Current Na) × TBW
-TBW = 0.6 × weight (males) or 0.5 × weight (females)
-
-Args:
-    current_na: Current serum sodium (mEq/L)
-    desired_na: Target sodium (mEq/L)
-    weight_kg: Patient weight in kg
-    sex: "male" or "female"
-
-Returns:
-    Dict with sodium deficit and TBW
-- **`calc_hyponatremia_correction()`**: Safe hyponatremia correction rate and 3% NaCl infusion rate.
-
-Max correction: 8-10 mEq/L in 24h (risk of osmotic demyelination syndrome)
-3% NaCl = 513 mEq Na per liter
-
-Infusion rate (mL/hr) = Na deficit / 513 × 1000 / hours
-
-Args:
-    current_na: Current serum sodium (mEq/L)
-    desired_na: Target sodium (mEq/L)
-    weight_kg: Patient weight in kg
-    sex: "male" or "female"
-    hours: Correction time in hours
-
-Returns:
-    Dict with correction plan
-- **`assess_hyperkalemia_ecg_risk()`**: ECG risk assessment based on potassium level.
-
-K+ 5.5-6.5: Peaked T waves
-K+ 6.5-7.0: Loss of P wave, widened QRS
-K+ 7.0-8.0: Sine wave pattern
-K+ > 8.0: Cardiac arrest risk
-
-Args:
-    k_level: Serum potassium in mEq/L
-
-Returns:
-    Dict with risk level and expected ECG changes
-- **`calc_calcium_gluconate_dose()`**: Calcium gluconate 10% for cardioprotection in hyperkalemia.
-
-Dose: 10-20 mL of 10% calcium gluconate IV over 2-5 minutes
-Onset: 1-3 minutes, Duration: 30-60 minutes
-Repeat if no ECG improvement in 5 minutes.
-
-10% Ca-gluconate: 100 mg/mL = 9.3 mg elemental Ca/mL = 0.465 mEq/mL
-
-Args:
-    k_level: Serum potassium (mEq/L)
-    weight_kg: Patient weight (for dose adjustment)
-
-Returns:
-    Dict with dosing
-- **`calc_insulin_glucose_dose()`**: Insulin + glucose for intracellular potassium shift.
-
-Standard: 10 units regular insulin IV + 25g dextrose (D50W 50 mL)
-Expected K drop: 0.5-1.2 mEq/L in 15-30 minutes
-Duration: 4-6 hours
-
-If glucose < 250: Give dextrose
-If glucose ≥ 250: Insulin only (monitor for hypoglycemia)
-
-Args:
-    k_level: Serum potassium (mEq/L)
-    weight_kg: Patient weight
-    glucose_mg_dl: Current blood glucose
-
-Returns:
-    Dict with insulin/glucose dosing
-
----
-
-## 📐 Mathematical Formulation & Logic
-
-```text
-  ods_risk = "HIGH"
-  ods_risk = "MODERATE"
-  ods_risk = "LOW"
-```
-
----
-
-## 💻 CLI Quickstart & Usage
-
-### 1. Guided Interactive Mode
-```bash
-python cli.py
-```
-
-### 2. Direct Parameterized Evaluation
-```bash
-python cli.py --input data.csv
-```
-
-### Parameter Reference
-- `--interactive`: Launch guided terminal interactive wizard.
-- `--input <path>`: Evaluate input from JSON or CSV specification.
-- `--json`: Output deterministic structured results in JSON format.
-
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `case_id` | Parameter / observation metric | Required |
-| `patient_synthetic_id` | Parameter / observation metric | Required |
-| `metric_primary` | Parameter / observation metric | Required |
-| `metric_secondary` | Parameter / observation metric | Required |
-| `is_stat` | Parameter / observation metric | Required |
-| `status_flag` | Parameter / observation metric | Required |
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, DOB, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition. Configure `AUDIT_SECRET_KEY` env var for persistent audit integrity.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Input Validation:** All calculation functions validate physiological ranges to prevent erroneous outputs.
-* **FastAPI & Prometheus Telemetry:** Exposes REST endpoints and operational Prometheus metrics (`/metrics`).
-
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
+The web UI is designed for GitHub Pages; publication status is determined by the repository's Actions and Pages configuration. For local use:
 
 ```bash
-pytest -v
+python -m http.server 8001
+# Open http://localhost:8001/web/index.html
 ```
 
-Execute high-throughput batch simulation benchmarks:
+It requires a modern browser with WebAssembly and access to the version-pinned Pyodide distribution hosted on jsDelivr. Calculations execute in the local Python WebAssembly runtime; the app does not upload entered numbers. The Python runtime and its standard-library files are downloaded from a third-party CDN. No identifiers should be submitted. Do not rely on the browser as an offline-first app or an emergency-care tool.
+
+## Installation and CLI
+
+Python 3.10+:
 
 ```bash
-python simulator.py 1000
+python -m pip install -e ".[api,test]"
+python -m pytest -q
+electrolyte-guard hyponatremia --na 120 --desired-na 125 --weight 70
+electrolyte-emergency-engine audit --primary 14 --secondary 5 --status NORMAL
+electrolyte-emergency-engine batch -i sample.csv -o results.csv
 ```
 
-### Test Coverage
-
-- **50 tests** covering all calculation functions, CLI commands, PHI guard enforcement, audit trail integrity, and input validation
-- Tests verify physiological range validation, edge cases, and error handling
-
----
-
-## 🐳 Container Deployment
+The `electrolyte-guard` command exposes unvalidated illustrative treatment routines. The `electrolyte-emergency-engine` command takes generic synthetic metrics and is separate from the electrolyte calculator. Its API can be run locally:
 
 ```bash
-docker build -t electrolyte-emergency-agent .
-docker run -p 8000:8000 electrolyte-emergency-agent
+electrolyte-emergency-engine serve --host 127.0.0.1 --port 8000
 ```
+
+The server provides `GET /health`, `POST /api/audit`, and `POST /api/chat`. The additional `agents.api` prototype has separate health, metrics, audit, chat, and audit log routes. **Neither server implements user authentication or a verified PHI-handling workflow; never expose it as a public clinical service.**
+
+## Container
+
+```bash
+export AUDIT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+docker compose up --build
+# http://127.0.0.1:8000/health
+```
+
+The container binds to localhost by default. Configure a new random secret for each deployment and store it securely outside source control. The HMAC audit trail is **in-memory**, is lost on restart, and is not an immutable compliance-grade audit system. Regex-based identifier detection is incomplete and cannot guarantee de-identification.
+
+## Tests and verification
+
+```bash
+python -m pytest -q
+python -m compileall -q agents electrolyte_emergency_agent electrolyte_guard.py enrichment.py
+```
+
+GitHub Actions tests Python 3.10–3.12, JavaScript syntax, package installation, finite-number input validation, correction-time boundaries, CSV parsing, and audit-signature tampering. After successful tests on `master`, the workflow builds a static Pages artifact from `web/index.html` and `electrolyte_guard.py`.
+
+## Clinical and implementation caveats
+
+A sodium deficit formula is a simplified mass-balance estimate, **not** a validated 3% saline infusion rate. The time-scaled sodium change ceiling in the prototype illustrates published correction *limits*, not treatment *targets*; ODS risk cannot be inferred from those values alone. Potassium concentration does not reliably predict ECG findings. Medication and fluid recommendations in older prototype functions may be outdated or inappropriate in individual patients and require independent clinical review.
+
+For background see [European hyponatremia clinical practice guideline (2014)](https://doi.org/10.1530/EJE-13-1020) and [UK Kidney Association hyperkalaemia guideline](https://www.ukkidney.org/health-professionals/guidelines/treatment-acute-hyperkalaemia-adults-0). These references do **not** imply that this software implements or has been validated against those guidelines.
+
+## Technology and license
+
+Python standard library for the electrolyte calculator; optional FastAPI/Pydantic/Uvicorn for APIs; pytest for tests; HTML/CSS/JavaScript and Pyodide for the browser UI; Docker and GitHub Actions for packaging/deployment. Compatible with modern Chromium, Firefox, and Safari browsers that support WebAssembly. Licensed under [MIT](LICENSE).

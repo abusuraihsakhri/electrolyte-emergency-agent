@@ -1,27 +1,34 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "electrolyte-emergency-engine"
 version = "2.0.0"
-description = "ElectrolyteGuard: Severe Dyskalemia & Dysnatremia Safe Correction Rate Engine"
+description = "Electrolyte calculation prototypes and audit utilities for education and research"
 readme = "README.md"
-authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
-license = { text = "MIT" }
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{name = "Dr. Abu Suraih Sakhri"}]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering :: Medical Science Apps.",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Intended Audience :: Science/Research",
 ]
-requires-python = ">=3.9"
 dependencies = []
+
+[project.optional-dependencies]
+api = ["fastapi>=0.110,<1", "uvicorn>=0.29,<1", "pydantic>=2,<3"]
+test = ["pytest>=8,<10"]
 
 [project.scripts]
 electrolyte-emergency-engine = "electrolyte_emergency_agent.cli:main"
+electrolyte-guard = "electrolyte_guard:main"
 
 [project.urls]
-Homepage = "https://github.com/abusuraihsakhri/electrolyte-emergency-engine"
-Repository = "https://github.com/abusuraihsakhri/electrolyte-emergency-engine.git"
+Homepage = "https://github.com/abusuraihsakhri/electrolyte-emergency-agent"
+Repository = "https://github.com/abusuraihsakhri/electrolyte-emergency-agent"
+
+[tool.setuptools]
+packages = ["agents", "electrolyte_emergency_agent"]
+py-modules = ["electrolyte_guard", "enrichment"]

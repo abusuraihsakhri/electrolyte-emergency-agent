@@ -62,3 +62,33 @@ def test_supervisor_consensus_and_audit():
     # CLI tests
     assert main(["audit", "--case-id", "CLI-TEST-01"]) == 0
     assert main(["chat", "Explain", "specifications"]) == 0
+
+
+def test_audit_hmac_detects_modified_signed_fields():
+    from agents.base import AuditTrail
+    trail = AuditTrail(secret_key="local-test-key")
+    trail.log("tester", "test", "event", {"count": 1})
+    assert trail.verify_integrity()
+    trail.logs[0]["actor"] = "attacker"
+    assert not trail.verify_integrity()
+
+
+def test_audit_trail_getter_is_defensive():
+    from agents.base import AuditTrail
+    trail = AuditTrail(secret_key="local-test-key")
+    trail.log("tester", "test", "event", {"count": 1})
+    trail.get_trail()[0]["event_type"] = "modified"
+    assert trail.verify_integrity()
+
+
+def test_batch_false_flag_remains_false(tmp_path):
+    import csv
+    inp = tmp_path / "cases.csv"
+    out = tmp_path / "out.csv"
+    inp.write_text("case_id,patient_synthetic_id,metric_primary,metric_secondary,is_stat,status_flag\n"
+                   "CASE-1,SYNTH-1,1,1,false,NOMINAL\n", encoding="utf-8")
+    assert main(["batch", "-i", str(inp), "-o", str(out)]) == 0
+    with out.open(newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    assert rows[0]["stat_critical_alerts"] == "0"
+    assert rows[0]["overall_status"] == "CONCORDANT_NORMAL"

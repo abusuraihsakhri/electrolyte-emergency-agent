@@ -45,14 +45,13 @@ def test_hyponatremia_not_needed():
     assert r["correction_needed"] is False
 
 
-def test_hyponatremia_ods_risk():
-    """Trying to correct too fast should flag HIGH risk.
-    Na 110→135 desired, but capped at 120 (max 10 mEq/24h).
-    Correction rate = 10/24 = 0.417 mEq/hr, 10 mEq/24h → MODERATE.
-    To get HIGH, need correction_per_24h > 10."""
+def test_hyponatremia_short_window_cap():
+    """A 12-hour window must not allow an entire 24-hour correction limit."""
     r = calc_hyponatremia_correction(110, 135, 70, "male", 12)
-    # With 12h window, max correction = 10, rate = 10/12 = 0.833/hr, 20 mEq/24h → HIGH
-    assert r["ods_risk"] == "HIGH"
+    assert r["safe_desired_na"] == 115.0
+    assert r["correction_per_24h_meq"] == 10.0
+    assert r["requested_exceeds_limit"] is True
+    assert r["ods_risk"] != "HIGH"
 
 
 def test_hyponatremia_safe_cap():
@@ -291,3 +290,28 @@ def test_phosphorus_invalid_weight():
     import pytest
     with pytest.raises(ValueError):
         calc_phosphorus_dose(1.5, -70)
+
+
+def test_hyponatremia_cumulative_limit_after_first_day():
+    r = calc_hyponatremia_correction(100, 140, 70, hours=48)
+    assert r["safe_desired_na"] == 118.0
+    r25 = calc_hyponatremia_correction(100, 140, 70, hours=25)
+    assert r25["safe_desired_na"] < 111.0
+
+
+@pytest.mark.parametrize("invalid", [float("nan"), float("inf"), -float("inf")])
+def test_nonfinite_measurements_rejected(invalid):
+    with pytest.raises(ValueError):
+        calc_sodium_deficit(120, 130, invalid)
+    with pytest.raises(ValueError):
+        assess_hyperkalemia_ecg_risk(invalid)
+    with pytest.raises(ValueError):
+        calc_hyponatremia_correction(120, 130, 70, hours=invalid)
+
+
+def test_invalid_sex_and_potassium_binder_inputs():
+    with pytest.raises(ValueError):
+        calc_sodium_deficit(120, 130, 70, "unknown")
+    with pytest.raises(ValueError):
+        calc_kayexalate_dose(float("nan"))
+    assert "Do NOT mix with sorbitol" in calc_kayexalate_dose(6, agent="kayexalate")["note"]
