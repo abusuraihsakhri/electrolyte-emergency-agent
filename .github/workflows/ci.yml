@@ -46,6 +46,18 @@ jobs:
                       file.write_text(script, encoding="utf-8")
                       subprocess.run(["node", "--check", str(file)], check=True)
           PY
+      - name: Smoke-test published Pages assets
+        run: |
+          mkdir -p /tmp/site-check
+          curl -fLsS --retry 8 --retry-delay 3 \
+            "https://abusuraihsakhri.github.io/electrolyte-emergency-agent/" \
+            -o /tmp/site-check/index.html
+          curl -fLsS --retry 8 --retry-delay 3 \
+            "https://abusuraihsakhri.github.io/electrolyte-emergency-agent/electrolyte_guard.py" \
+            -o /tmp/site-check/electrolyte_guard.py
+          grep -q 'Electrolyte Emergency Agent' /tmp/site-check/index.html
+          grep -q 'loadPyodide' /tmp/site-check/index.html
+          grep -q 'def calc_sodium_deficit' /tmp/site-check/electrolyte_guard.py
       - name: Run test suite
         run: python -m pytest -q
       - name: Check signed audit integrity
