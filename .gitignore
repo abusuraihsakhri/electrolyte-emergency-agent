@@ -8,3 +8,14 @@ output.csv
 dist/
 build/
 *.egg-info/
+
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.coverage
+htmlcov/
+.ruff_cache/
+_site/
+.DS_Store
