@@ -183,8 +183,9 @@ async function initialize() {
   try {
     if (typeof loadPyodide !== "function") throw new Error("Python runtime did not load. Check your network or content blockers.");
     python = await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"});
-    let response = await fetch("./electrolyte_guard.py");
-    if (!response.ok && location.pathname.endsWith("/web/index.html")) response = await fetch("../electrolyte_guard.py");
+    const sourcePath = location.pathname.endsWith("/web/index.html")
+      ? "../electrolyte_guard.py" : "./electrolyte_guard.py";
+    const response = await fetch(sourcePath);
     if (!response.ok) throw new Error("Python calculator source is unavailable (HTTP " + response.status + ").");
     python.FS.writeFile("electrolyte_guard.py", await response.text());
     python.runPython("import electrolyte_guard");
