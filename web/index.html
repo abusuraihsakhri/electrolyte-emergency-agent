@@ -1,236 +1,204 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Electrolyte Emergency Engine — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Electrolyte Emergency Agent — Research Calculator</title>
+  <style>
+    :root { color-scheme:dark; --bg:#0b1020; --surface:#151d30; --border:#344057; --text:#eef2f8; --muted:#bac5d5; --focus:#80bfff; --accent:#4a90e2; }
+    * { box-sizing:border-box }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif; }
+    main { max-width:1040px; margin:auto; padding:clamp(1rem,3vw,2.5rem); }
+    header { margin-bottom:1.4rem; }
+    h1 { font-size:clamp(1.65rem,3vw,2.2rem); line-height:1.2; margin:.2rem 0 .6rem; }
+    h2 { font-size:1.13rem; margin:0 0 1rem; }
+    p { margin:.45rem 0 .9rem; }
+    .muted { color:var(--muted); }
+    .notice { padding:1rem 1.2rem; background:#31281b; border:1px solid #b8924d; border-radius:10px; margin:1.3rem 0; }
+    .layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:1.2rem; }
+    .card { min-width:0; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:1.4rem; }
+    .field { margin-bottom:.9rem; }
+    label { display:block; margin-bottom:.25rem; font-weight:600; }
+    input,select,button { width:100%; font:inherit; border-radius:7px; padding:.62rem .75rem; }
+    input,select { color:var(--text); background:#0c1424; border:1px solid #6a778d; }
+    input:focus-visible,select:focus-visible,button:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+    button { border:0; background:var(--accent); color:#fff; font-weight:700; cursor:pointer; }
+    button:hover:not(:disabled) { background:#277bd1; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    [hidden] { display:none !important; }
+    #runtime-status { min-height:1.5rem; }
+    #results { margin:0; overflow-wrap:anywhere; }
+    #results div { padding:.52rem 0; border-bottom:1px solid var(--border); }
+    dt { color:var(--muted); font-size:.9rem; }
+    dd { margin:0; font-weight:600; }
+    #error { color:#ffb9ae; white-space:pre-wrap; }
+    footer { color:var(--muted); font-size:.89rem; padding:1.25rem 0; }
+    a { color:#9dcdff; }
+    @media(max-width:720px) { .layout { grid-template-columns:1fr; } .card { padding:1rem; } }
+  </style>
 </head>
 <body>
+<main>
+  <header>
+    <h1>Electrolyte Emergency Agent</h1>
+    <p class="muted">Local, browser-based Python calculations for research and teaching.</p>
+  </header>
+  <aside class="notice" aria-label="Clinical safety limitation">
+    <strong>Not for clinical decision-making.</strong> This prototype is not validated as a medical device.
+    Do not use it to diagnose, prescribe, determine infusion rates, or manage an emergency.
+    Serum electrolyte interpretation requires clinical context and professional assessment.
+    Do not enter identifiable patient information.
+  </aside>
+  <div class="layout">
+    <section class="card" aria-labelledby="form-title">
+      <h2 id="form-title">Calculate</h2>
+      <form id="calc-form">
+        <div class="field">
+          <label for="mode">Calculation</label>
+          <select id="mode">
+            <option value="sodium">Sodium deficit (arithmetic estimate)</option>
+            <option value="potassium">Potassium category (non-diagnostic)</option>
+          </select>
+        </div>
+        <div id="sodium-fields">
+          <div class="field">
+            <label for="na-current">Current sodium (mmol/L)</label>
+            <input id="na-current" type="number" min="0.1" max="200" step="any" value="120" required>
+          </div>
+          <div class="field">
+            <label for="na-target">Comparison sodium (mmol/L)</label>
+            <input id="na-target" type="number" min="0.1" max="200" step="any" value="125" required>
+          </div>
+          <div class="field">
+            <label for="weight">Weight (kg)</label>
+            <input id="weight" type="number" min="0.1" max="500" step="any" value="70" required>
+          </div>
+          <div class="field">
+            <label for="sex">TBW estimation category</label>
+            <select id="sex">
+              <option value="male">Male (0.6 × weight)</option>
+              <option value="female">Female (0.5 × weight)</option>
+            </select>
+          </div>
+          <p class="muted">Fixed total-body-water factors are simplified assumptions; sodium deficit is not an infusion plan.</p>
+        </div>
+        <div id="potassium-fields" hidden>
+          <div class="field">
+            <label for="potassium">Serum potassium (mmol/L)</label>
+            <input id="potassium" type="number" min="0" max="15" step="any" value="6.2">
+          </div>
+          <p class="muted">Electrocardiographic abnormalities cannot be predicted reliably from a potassium level alone.</p>
+        </div>
+        <button id="submit" type="submit" disabled>Loading Python runtime…</button>
+      </form>
+    </section>
+    <section class="card" aria-labelledby="results-title">
+      <h2 id="results-title">Output</h2>
+      <p id="runtime-status" role="status" aria-live="polite">Loading Python runtime. An internet connection is required for the initial download.</p>
+      <p id="error" role="alert" hidden></p>
+      <dl id="results" aria-live="polite"></dl>
+      <p class="muted">Results use the repository's Python implementation. No patient information is uploaded by this app; the Python runtime is downloaded from a third-party CDN.</p>
+    </section>
+  </div>
+  <footer>
+    <a href="https://github.com/abusuraihsakhri/electrolyte-emergency-agent">Source and documentation</a>
+    · Educational software · MIT License
+  </footer>
+</main>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+<script>
+"use strict";
+const form = document.getElementById("calc-form");
+const mode = document.getElementById("mode");
+const submit = document.getElementById("submit");
+const status = document.getElementById("runtime-status");
+const error = document.getElementById("error");
+const results = document.getElementById("results");
+const sodiumFields = document.getElementById("sodium-fields");
+const potassiumFields = document.getElementById("potassium-fields");
+let python = null;
 
-    <div class="header">
-        <div class="header-title">
-            <h1>Electrolyte Emergency Engine</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
-        </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
-    </div>
+function switchMode() {
+  const sodium = mode.value === "sodium";
+  sodiumFields.hidden = !sodium;
+  potassiumFields.hidden = sodium;
+  for (const element of sodiumFields.querySelectorAll("input")) element.disabled = !sodium;
+  for (const element of potassiumFields.querySelectorAll("input")) element.disabled = sodium;
+  results.replaceChildren();
+  error.hidden = true;
+}
+mode.addEventListener("change", switchMode);
+switchMode();
 
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Electrolyte Emergency Engine Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "electrolyte-emergency-engine",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+function numberFrom(id) {
+  const element = document.getElementById(id);
+  if (!element.checkValidity() || element.value.trim() === "") throw new Error("Check the entered values and limits.");
+  const value = Number(element.value);
+  if (!Number.isFinite(value)) throw new Error("All values must be finite.");
+  return value;
+}
+function render(data) {
+  results.replaceChildren();
+  const allowed = mode.value === "sodium"
+    ? ["current_na", "desired_na", "tbw_liters", "na_deficit_meq", "weight_kg", "sex"]
+    : ["k_level", "severity", "risk", "ecg_changes"];
+  for (const key of allowed) {
+    const row = document.createElement("div");
+    const label = document.createElement("dt");
+    const value = document.createElement("dd");
+    label.textContent = key.replaceAll("_", " ");
+    value.textContent = String(data[key] ?? "Not available");
+    row.append(label, value);
+    results.append(row);
+  }
+}
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!python) return;
+  error.hidden = true;
+  results.replaceChildren();
+  try {
+    const payload = mode.value === "sodium"
+      ? {mode:"sodium", current_na:numberFrom("na-current"), desired_na:numberFrom("na-target"), weight_kg:numberFrom("weight"), sex:document.getElementById("sex").value}
+      : {mode:"potassium", k_level:numberFrom("potassium")};
+    python.globals.set("calc_payload_json", JSON.stringify(payload));
+    const output = python.runPython(
+      'import json, electrolyte_guard\n' +
+      'p = json.loads(calc_payload_json)\n' +
+      'result = electrolyte_guard.calc_sodium_deficit(p["current_na"], p["desired_na"], p["weight_kg"], p["sex"]) if p["mode"] == "sodium" else electrolyte_guard.assess_hyperkalemia_ecg_risk(p["k_level"])\n' +
+      'json.dumps(result, allow_nan=False)'
+    );
+    python.globals.delete("calc_payload_json");
+    render(JSON.parse(output));
+    status.textContent = "Calculation completed locally.";
+  } catch (exc) {
+    error.textContent = String(exc.message || exc);
+    error.hidden = false;
+    status.textContent = "Please review your input.";
+    try { python.globals.delete("calc_payload_json"); } catch (_) {}
+  }
+});
+async function initialize() {
+  try {
+    if (typeof loadPyodide !== "function") throw new Error("Python runtime did not load. Check your network or content blockers.");
+    python = await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"});
+    let response = await fetch("./electrolyte_guard.py");
+    if (!response.ok && location.pathname.endsWith("/web/index.html")) response = await fetch("../electrolyte_guard.py");
+    if (!response.ok) throw new Error("Python calculator source is unavailable (HTTP " + response.status + ").");
+    python.FS.writeFile("electrolyte_guard.py", await response.text());
+    python.runPython("import electrolyte_guard");
+    submit.disabled = false;
+    submit.textContent = "Calculate";
+    status.textContent = "Python runtime ready. All calculations execute in your browser.";
+  } catch (exc) {
+    status.textContent = "Unable to initialize browser Python.";
+    error.textContent = String(exc.message || exc);
+    error.hidden = false;
+    submit.textContent = "Unavailable";
+  }
+}
+initialize();
+</script>
 </body>
 </html>
