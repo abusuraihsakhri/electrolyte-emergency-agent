@@ -85,8 +85,8 @@ def test_batch_false_flag_remains_false(tmp_path):
     import csv
     inp = tmp_path / "cases.csv"
     out = tmp_path / "out.csv"
-    inp.write_text("case_id,patient_synthetic_id,metric_primary,metric_secondary,is_stat,status_flag\\n"
-                   "CASE-1,SYNTH-1,1,1,false,NOMINAL\\n", encoding="utf-8")
+    inp.write_text("case_id,patient_synthetic_id,metric_primary,metric_secondary,is_stat,status_flag\n"
+                   "CASE-1,SYNTH-1,1,1,false,NOMINAL\n", encoding="utf-8")
     assert main(["batch", "-i", str(inp), "-o", str(out)]) == 0
     with out.open(newline="") as stream:
         rows = list(csv.DictReader(stream))
