@@ -1,5 +1,7 @@
 # Electrolyte Emergency Agent
 
+### [Open the Live Application →](https://abusuraihsakhri.github.io/electrolyte-emergency-agent/)
+
 Python-based electrolyte calculation prototypes, a generic rule-based audit interface, and a lightweight browser research calculator.
 
 > **Clinical limitation:** Research and teaching only. **Not validated for diagnosis, dosing, prescribing, infusion pump control, or emergency patient management.** No algorithm here can replace an ECG, serial blood testing, clinical assessment, or local hospital protocols. Do not enter real patient identifiers.
@@ -14,7 +16,7 @@ Python-based electrolyte calculation prototypes, a generic rule-based audit inte
 
 ## Browser application
 
-The web UI is designed for GitHub Pages; publication status is determined by the repository's Actions and Pages configuration. For local use:
+The static app is published through GitHub Pages. CI verifies that the published HTML and Python source are retrievable over HTTPS. For local use:
 
 ```bash
 python -m http.server 8001

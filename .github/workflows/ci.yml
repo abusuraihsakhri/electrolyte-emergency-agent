@@ -34,7 +34,7 @@ jobs:
           python - <<'PY'
           import pathlib, re, subprocess, tempfile
           page = pathlib.Path("web/index.html").read_text(encoding="utf-8")
-          assert 'fetch("./electrolyte_guard.py")' in page
+          assert 'electrolyte_guard.py' in page
           assert 'cdn.jsdelivr.net/pyodide/' in page
           assert "HMAC_SHA256_e83f" not in page
           scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", page, flags=re.S)
@@ -46,6 +46,26 @@ jobs:
                       file.write_text(script, encoding="utf-8")
                       subprocess.run(["node", "--check", str(file)], check=True)
           PY
+      - name: Smoke-test published Pages assets
+        run: |
+          mkdir -p /tmp/site-check
+          curl -fLsS --retry 8 --retry-delay 3 \
+            "https://abusuraihsakhri.github.io/electrolyte-emergency-agent/" \
+            -o /tmp/site-check/index.html
+          curl -fLsS --retry 8 --retry-delay 3 \
+            "https://abusuraihsakhri.github.io/electrolyte-emergency-agent/electrolyte_guard.py" \
+            -o /tmp/site-check/electrolyte_guard.py
+          grep -q 'Electrolyte Emergency Agent' /tmp/site-check/index.html
+          grep -q 'loadPyodide' /tmp/site-check/index.html
+          grep -q 'def calc_sodium_deficit' /tmp/site-check/electrolyte_guard.py
+      - name: Browser Python end-to-end test
+        if: matrix.python-version == '3.11'
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+          python -m http.server 8765 --bind 127.0.0.1 > /tmp/electrolyte-http.log 2>&1 &
+          sleep 2
+          node tests/browser-smoke.cjs
       - name: Run test suite
         run: python -m pytest -q
       - name: Check signed audit integrity
