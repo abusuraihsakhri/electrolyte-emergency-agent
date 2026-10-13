@@ -16,8 +16,19 @@ Stdlib only.
 
 import argparse
 import json
+import math
 import sys
 from typing import Dict, Any
+
+
+def _require_finite(**measurements):
+    """Reject NaN and infinity before comparisons and JSON serialization."""
+    for name, value in measurements.items():
+        try:
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite")
+        except (TypeError, OverflowError) as exc:
+            raise ValueError(f"{name} must be a finite number") from exc
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +52,7 @@ def calc_sodium_deficit(current_na: float, desired_na: float,
     Returns:
         Dict with sodium deficit and TBW
     """
+    _require_finite(current_na=current_na, desired_na=desired_na, weight_kg=weight_kg)
     if weight_kg <= 0 or weight_kg > 500:
         raise ValueError("Weight must be positive and realistic (0-500 kg)")
     if current_na <= 0 or current_na > 200:
@@ -50,6 +62,8 @@ def calc_sodium_deficit(current_na: float, desired_na: float,
     if desired_na <= current_na:
         raise ValueError("Desired Na must be greater than current Na")
 
+    if not isinstance(sex, str) or sex.lower() not in ("male", "female"):
+        raise ValueError("Sex must be 'male' or 'female' for this TBW estimate")
     tbw_factor = 0.6 if sex.lower() == "male" else 0.5
     tbw = tbw_factor * weight_kg
     na_deficit = (desired_na - current_na) * tbw
@@ -85,6 +99,7 @@ def calc_hyponatremia_correction(current_na: float, desired_na: float,
     Returns:
         Dict with correction plan
     """
+    _require_finite(current_na=current_na, desired_na=desired_na, weight_kg=weight_kg, hours=hours)
     if hours <= 0:
         raise ValueError("Hours must be positive")
     if weight_kg <= 0 or weight_kg > 500:
@@ -100,8 +115,12 @@ def calc_hyponatremia_correction(current_na: float, desired_na: float,
             "correction_needed": False,
         }
 
-    # Cap desired Na to max safe correction
-    max_correction = 10.0 if hours <= 24 else 18.0  # 10 per 24h, 18 per 48h
+    if desired_na <= current_na:
+        raise ValueError("Desired Na must exceed current Na")
+    # Educational ceiling: first 24 h <=10 mmol/L; each subsequent 24 h <=8.
+    # A total ceiling is not a treatment target or a patient-specific safety assessment.
+    max_correction = min(hours, 24.0) * (10.0 / 24.0)
+    max_correction += max(hours - 24.0, 0.0) * (8.0 / 24.0)
     safe_desired = min(desired_na, current_na + max_correction)
 
     deficit = calc_sodium_deficit(current_na, safe_desired, weight_kg, sex)
@@ -138,6 +157,13 @@ def calc_hyponatremia_correction(current_na: float, desired_na: float,
         "correction_rate_meq_hr": round(correction_per_hour, 2),
         "correction_per_24h_meq": round(correction_per_24h, 1),
         "max_safe_correction_24h": 10.0,
+        "requested_exceeds_limit": desired_na > safe_desired,
+        "calculation_only": True,
+        "clinical_caution": (
+            "Arithmetic estimate, NOT a hypertonic saline prescription or "
+            "patient-specific ODS risk prediction. Symptoms, chronicity, urine "
+            "output, comorbidities and serial sodium values require clinician review."
+        ),
         "three_pct_nacl_rate_ml_hr": round(infusion_rate_ml_hr, 1),
         "three_pct_nacl_conc_meq_l": hypertonic_na_conc,
         "ods_risk": ods_risk,
@@ -164,6 +190,7 @@ def assess_hyperkalemia_ecg_risk(k_level: float) -> Dict[str, Any]:
     Returns:
         Dict with risk level and expected ECG changes
     """
+    _require_finite(k_level=k_level)
     if k_level < 0 or k_level > 15:
         raise ValueError("K level must be in physiological range (0-15 mEq/L)")
     if k_level < 5.5:
@@ -172,7 +199,7 @@ def assess_hyperkalemia_ecg_risk(k_level: float) -> Dict[str, Any]:
             "severity": "mild",
             "ecg_changes": "None expected",
             "risk": "low",
-            "action": "Monitor, dietary counseling, review medications",
+            "action": "Interpret with clinical context and measured ECG; a potassium value does not predict ECG findings.",
         }
     elif k_level < 6.5:
         return {
@@ -180,7 +207,7 @@ def assess_hyperkalemia_ecg_risk(k_level: float) -> Dict[str, Any]:
             "severity": "moderate",
             "ecg_changes": "Peaked T waves, shortened QT",
             "risk": "moderate",
-            "action": "Urgent: Insulin+glucose, kayexalate/patiromer. Consider calcium if ECG changes.",
+            "action": "Prompt clinical assessment with ECG and repeat testing as appropriate; do not infer ECG changes from potassium alone.",
         }
     elif k_level < 7.0:
         return {
@@ -188,7 +215,7 @@ def assess_hyperkalemia_ecg_risk(k_level: float) -> Dict[str, Any]:
             "severity": "severe",
             "ecg_changes": "Loss of P waves, widened QRS, prolonged PR",
             "risk": "high",
-            "action": "EMERGENT: IV calcium (cardioprotection), insulin+glucose, bicarb, kayexalate",
+            "action": "Emergency clinical assessment, ECG and local treatment protocol; no ECG pattern is guaranteed by potassium level.",
         }
     elif k_level < 8.0:
         return {
@@ -196,7 +223,7 @@ def assess_hyperkalemia_ecg_risk(k_level: float) -> Dict[str, Any]:
             "severity": "critical",
             "ecg_changes": "Sine wave pattern, very wide QRS",
             "risk": "critical",
-            "action": "LIFE-THREATENING: Immediate IV calcium, insulin+glucose, emergent dialysis consult",
+            "action": "Immediate emergency care and monitored assessment under local hyperkalemia protocol.",
         }
     else:
         return {
@@ -204,7 +231,7 @@ def assess_hyperkalemia_ecg_risk(k_level: float) -> Dict[str, Any]:
             "severity": "lethal",
             "ecg_changes": "Sine wave → ventricular fibrillation → asystole",
             "risk": "imminent_arrest",
-            "action": "CARDIAC ARREST RISK: Immediate IV calcium, CPR readiness, emergent dialysis",
+            "action": "Immediate emergency care and ECG monitoring; this output is not a prescription.",
         }
 
 
@@ -225,6 +252,7 @@ def calc_calcium_gluconate_dose(k_level: float, weight_kg: float = 70.0) -> Dict
     Returns:
         Dict with dosing
     """
+    _require_finite(k_level=k_level, weight_kg=weight_kg)
     if k_level < 0 or k_level > 15:
         raise ValueError("K level must be in physiological range (0-15 mEq/L)")
     if weight_kg <= 0 or weight_kg > 500:
@@ -280,6 +308,7 @@ def calc_insulin_glucose_dose(k_level: float, weight_kg: float = 70.0,
     Returns:
         Dict with insulin/glucose dosing
     """
+    _require_finite(k_level=k_level, weight_kg=weight_kg, glucose_mg_dl=glucose_mg_dl)
     if k_level < 0 or k_level > 15:
         raise ValueError("K level must be in physiological range (0-15 mEq/L)")
     if weight_kg <= 0 or weight_kg > 500:
@@ -336,6 +365,7 @@ def calc_bicarbonate_dose(k_level: float, weight_kg: float = 70.0,
     Returns:
         Dict with bicarbonate dosing
     """
+    _require_finite(k_level=k_level, weight_kg=weight_kg, hco3=hco3)
     if k_level < 0 or k_level > 15:
         raise ValueError("K level must be in physiological range (0-15 mEq/L)")
     if weight_kg <= 0 or weight_kg > 500:
@@ -383,11 +413,16 @@ def calc_kayexalate_dose(k_level: float, weight_kg: float = 70.0,
     Returns:
         Dict with binding agent dosing
     """
+    _require_finite(k_level=k_level, weight_kg=weight_kg)
+    if not (0 <= k_level <= 15):
+        raise ValueError("K level must be in physiological range (0-15 mEq/L)")
+    if not (0 < weight_kg <= 500):
+        raise ValueError("Weight must be positive and realistic (0-500 kg)")
     if agent == "kayexalate":
         dose = "15-30g PO or rectally"
         onset = "1-6 hours (PO), longer PR"
         route = "PO/PR"
-        note = "Mix with sorbitol (risk of intestinal necrosis with sorbitol). Avoid in post-op patients."
+        note = "Do NOT mix with sorbitol. Risk of serious gastrointestinal injury; not a reliable emergency potassium-lowering treatment."
         expected_drop = "0.5-1.0 mEq/L"
     elif agent == "patiromer":
         dose = "8.4g PO once daily"
@@ -458,6 +493,7 @@ def calc_hypocalcemia_dose(current_ca: float, weight_kg: float) -> Dict[str, Any
     Returns:
         Dict with calcium replacement dosing
     """
+    _require_finite(current_ca=current_ca, weight_kg=weight_kg)
     if weight_kg <= 0 or weight_kg > 500:
         raise ValueError("Weight must be positive and realistic (0-500 kg)")
     if current_ca < 0 or current_ca > 20:
@@ -511,6 +547,7 @@ def calc_hypercalcemia_treatment(ca_level: float, weight_kg: float) -> Dict[str,
     Returns:
         Dict with treatment plan
     """
+    _require_finite(ca_level=ca_level, weight_kg=weight_kg)
     if weight_kg <= 0 or weight_kg > 500:
         raise ValueError("Weight must be positive and realistic (0-500 kg)")
     if ca_level < 0 or ca_level > 30:
@@ -585,6 +622,7 @@ def calc_magnesium_dose(current_mg: float, weight_kg: float,
     Returns:
         Dict with magnesium replacement
     """
+    _require_finite(current_mg=current_mg, weight_kg=weight_kg)
     if weight_kg <= 0 or weight_kg > 500:
         raise ValueError("Weight must be positive and realistic (0-500 kg)")
     if current_mg < 0 or current_mg > 10:
@@ -656,6 +694,7 @@ def calc_phosphorus_dose(current_phos: float, weight_kg: float,
     Returns:
         Dict with phosphorus replacement
     """
+    _require_finite(current_phos=current_phos, weight_kg=weight_kg)
     if weight_kg <= 0 or weight_kg > 500:
         raise ValueError("Weight must be positive and realistic (0-500 kg)")
     if current_phos < 0 or current_phos > 15:
